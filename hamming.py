@@ -49,12 +49,45 @@ def makeHammingCodeSECDED(inp: str) -> str:
     
     return hamm + str(p0)
 
+
+def makeBergerCode(inp: str) -> str:
+    r = int(ceil(log2(len(inp) +1)))
+    num1 = inp.count("1")
+    x = num1 ^ (2**r - 1)
+    x = format(x, '0'+str(r)+'b')
+    return inp + x
+
+
+
+def decodeBerger(inp: str) -> (str, bool):
+    l = len(inp)
+    r = findCheckLength(l)
+    en = makeBergerCode(inp[:-r])
+    return (inp[:-r], en == inp)
     
-        
+    
+    
+    
+    
+
+
+
+def findCheckLength(x: int) -> int:
+    d = ceil(x/2)
+    inter = d
+    berger = d + ceil(log2(d+1))
+    while berger != x:
+        if berger < x:
+            d += inter
+        if berger > x:
+            d-= inter
+        berger = d + ceil(log2(d+1))
+        inter = ceil(inter/2)
+    return x-d
+
+ 
 def listXOR(li: list) -> int:
     return reduce(lambda x, y: x ^ y, list(map(lambda x: int(x), li)))
-
-    
     
     
 def getBinaryPartition(x: int) -> list:
