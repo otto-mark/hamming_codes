@@ -1,10 +1,16 @@
 from math import *
 from functools import *
+from typing import Any
+
+NO_FLIP  = 0
+SEC_FLIP = 1
+DED_FLIP = 2
 
 def makeHammingCodeSEC(inp: str) -> str:
     """
         Returns a Hamming code for an input string
     """
+    inp = typeMe(inp)
     inp = inp[::-1]
     d = len(inp)
     r = ceil(log2(d))
@@ -48,8 +54,66 @@ def makeHammingCodeSECDED(inp: str) -> str:
     p0 = listXOR([hamm[i] for i in range(len(hamm))])
     
     return hamm + str(p0)
+    
+    
+def decodeHammingSEC(inp: str) -> (str, bool):
+    """
+        Takes a binary input string in Hamming Code, returns a tuple containing the retrieved
+        data as binary string and a bool indicating whether a bit flip was detected.
+    """
+    inp = typeMe(inp)
+    l = len(inp)
+    num_p = ceil(log2(l))
+    # find indices of parity bits (all powers of 2)
+    p_ix = [2**i-1 for i in range(num_p)]
+    inp = inp[::-1]
+    val = inp
 
+    # seperate data bits
+    d = "".join([inp[i] for i in range(l-1,0,-1) if i not in p_ix])
+    # check whether parity bits match
+    enc = makeHammingCodeSEC(d)[::-1]
+    if len(enc) != l:
+        return None
+    # received parity bits
+    p1 = [int(inp[i]) for i in p_ix]
+    # expected parity bits
+    p2 = [int(enc[i]) for i in p_ix]
+    # syndrome
+    s = [str(p1[i] ^ p2[i]) for i in range(len(p_ix))]
+    s = int("".join(s)[::-1], 2)
+    # no bit flip
+    if s == 0:
+        return (d, False)
+    # parity flipped
+    if s in p_ix:
+        return (d, True)
+    # data flipped
+    s -=1
+    inp = val[:s] + flip(val[s]) + val[s+1:]
+    d = "".join([inp[i] for i in range(l-1,0,-1) if i not in p_ix])
+    return (d, True)
+    
 
+def decodeHammingSECDED(inp: str) -> (str, bool, bool):
+    """
+        Takes a binary input string in Hamming Code SEC/DED, returns a tuple containing the
+        retrieved data as binary string and an integer indicating, whether
+            0 := no bit flip was detected
+            1 := single bit flip was detected and corrected
+            2 := double bit flip was detected ( => data string is faulty)
+    """
+    inp2 = inp[:-1]
+    print(inp, inp2)
+    dec = decodeHammingSEC(inp2)
+    if listXOR(inp):
+        return (dec[0], SEC_FLIP)
+    if dec[1]:
+        return (dec[0], DED_FLIP)
+    return (dec[0], NO_FLIP)
+  
+    
+    
 def makeBergerCode(inp: str) -> str:
     r = int(ceil(log2(len(inp) +1)))
     num1 = inp.count("1")
@@ -65,13 +129,24 @@ def decodeBerger(inp: str) -> (str, bool):
     en = makeBergerCode(inp[:-r])
     return (inp[:-r], en == inp)
     
-    
-    
-    
-    
+
+#-------------------------------------------------------------------------------
 
 
+def flip(a: str):
+    if a == "1":
+        return "0"
+    return "1"
 
+
+def typeMe(inp: Any) -> str:
+    if type(inp) == str:
+        return inp
+    if type(inp) == int:
+        return str(inp)
+    raise TypeError("Expected int but found {}".format(type(inp).__name__))
+    
+    
 def findCheckLength(x: int) -> int:
     d = ceil(x/2)
     inter = d
@@ -102,11 +177,10 @@ def getBinaryPartition(x: int) -> list:
             ret.append(i)
     return ret
     
+
 def isPowerOfTwo(x: int) -> bool:
     """
         Returns whether x is a power of 2
     """
     return x & (x-1) == 0
     
-
-

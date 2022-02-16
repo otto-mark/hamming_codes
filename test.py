@@ -18,6 +18,22 @@ class HammingTest(unittest.TestCase):
         self.assertEqual(makeHammingCodeSECDED("1111"), "11111111")
         self.assertEqual(makeHammingCodeSECDED("1100"), "11000011")
         
+    def test_hammingSEC_decode(self):
+        self.assertEqual(decodeHammingSEC(1001100), ("1001", False))
+        self.assertEqual(decodeHammingSEC(1001101), ("1001", True))
+        self.assertEqual(decodeHammingSEC(1001011), ("1000", False))
+        self.assertEqual(decodeHammingSEC(1101011), ("1000", True))
+        self.assertEqual(decodeHammingSEC(1100011), ("1100", True))
+        self.assertEqual(decodeHammingSEC("0001011"), ("1000", True))
+    
+    def test_hammingSECDED_decode(self):
+        self.assertEqual(decodeHammingSECDED("10010110"), ("1000", NO_FLIP))
+        self.assertEqual(decodeHammingSECDED("10010100"), ("1000", SEC_FLIP))
+        self.assertEqual(decodeHammingSECDED("10010101"), ("1000", DED_FLIP))
+        self.assertEqual(decodeHammingSECDED("10111110"), ("1111", DED_FLIP))
+        
+        
+        
     def test_berger_encoding(self):
         self.assertEqual(makeBergerCode("10001"), "10001"+"101")
         self.assertEqual(makeBergerCode("000"), "000"+"11")
